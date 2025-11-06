@@ -1,58 +1,62 @@
+#from ollama import chat
+#from ollama import ChatResponse
+import time
+
 from time import sleep
+
 import mss.tools
-from ollama import chat
-from ollama import ChatResponse
 import base64
-from resizeimage import resizeimage
 from PIL import Image
+import numpy as np
+from io import BytesIO
 
-x=0
+sct = mss.mss()
+monitor = sct.monitors[1]
 
-sleep(20)
-print("Starting script")
+print("Waiting for connected devices to respond...")
+sleep(5)
 
-while x == 0:
-    with mss.mss() as sct:
-        sct.compression_level = 9
+while True:
+    frames_b64 = []
 
-        for order in range(1, 6):
-            sct.shot(output=f"{order}.png")
 
-            with open(f"{order}.png", 'r+b') as f:
-                with Image.open(f) as image:
-                    cover = resizeimage.resize_cover(image, [256, 144])
-                    cover.save(f"{order}.png", image.format)
+    fps = 25
+    frame_time = 1.0 / fps
+    for i in range(5):
+        start = time.time()
 
-    with open("1.png", "rb") as f:
-        i1 = base64.b64encode(f.read()).decode("utf-8")
+        frame = np.array(sct.grab(monitor))[:, :, :3]
 
-    with open("2.png", "rb") as f:
-        i2 = base64.b64encode(f.read()).decode("utf-8")
+        img = Image.fromarray(frame).resize((128, 72), Image.Resampling.NEAREST)
 
-    with open("3.png", "rb") as f:
-        i3 = base64.b64encode(f.read()).decode("utf-8")
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=15)
+        frames_b64.append(base64.b64encode(buf.getvalue()).decode("utf-8"))
 
-    with open("4.png", "rb") as f:
-        i4 = base64.b64encode(f.read()).decode("utf-8")
+        print("hello")
 
-    with open("5.png", "rb") as f:
-        i5 = base64.b64encode(f.read()).decode("utf-8")
+        elapsed = time.time() - start
+        if elapsed < frame_time:
+            time.sleep(frame_time - elapsed)
 
-    print("done once")
+    #out of the loop
+    i1, i2, i3, i4, i5 = frames_b64
 
+
+
+
+#LLM Method
 '''
-
-    response: ChatResponse = chat(model='', messages=[
+    response: ChatResponse = chat(model='moondream:v2', messages=[
         {
             'role': 'user',
-            'content': 'Drive this car. Say F to go forwards, L to go left, R to go right and B to break. Write any combination of those to do both. If you see you fell off the edge say R', "images": [i1,i2,i3,i4,i5],
+            'content': 'Watch frames. Say G everytime you want me to press gas',
+            'images': [i1,i2,i3,i4,i5],
         },
     ])
     print(response.message.content)
 
 '''
-
-
 
 
 
