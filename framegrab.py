@@ -1,10 +1,15 @@
 """Code Begins"""
 
+'''Imports'''
 #For LLM Method
 '''
 from ollama import chat
 from ollama import ChatResponse
 '''
+
+#For Data Saving
+import os
+import pickle
 
 #For FPS timing
 import time
@@ -20,10 +25,16 @@ import numpy as np
 #For input listening
 from pynput import keyboard
 
+
 '''Variables'''
 #From screengrab
 sct = mss.mss()
 monitor = sct.monitors[1]
+
+#From data saving
+dataset = []
+save_dir = "training_data"
+os.makedirs(save_dir, exist_ok=True)
 
 #From picture conversion
 frames = []
@@ -41,7 +52,7 @@ print("Waiting for connected devices to respond...")
 sleep(5)
 
 '''Read Controls'''
-def read_controls():
+def read_controls() -> tuple[int, int, int]:
     steer_val = 0
     if "a" in pressed:
         steer_val -= 1
@@ -51,18 +62,25 @@ def read_controls():
     brake_val = 1 if "s" in pressed else 0
     return steer_val, throttle_val, brake_val
 
-def on_press(key: keyboard.Key | keyboard.KeyCode | None) -> None:
-    if isinstance(key, keyboard.KeyCode) and key.char is not None:
-        pressed.add(key.char)
+def on_press(key) -> None:
+    try:
+        if key.char is not None:
+            pressed.add(key.char)
+    except AttributeError:
+        pass  # Ignore special keys (arrows, ctrl, etc.)
 
-def on_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
-    if isinstance(key, keyboard.KeyCode) and key.char is not None:
-        pressed.discard(key.char)
+
+def on_release(key) -> None:
+    try:
+        if key.char is not None:
+            pressed.discard(key.char)
+    except AttributeError:
+        pass
 
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
 
-#InfLoop
+'''Main Loop'''
 while True:
     for i in range(5):
         #Start timing 25fps
@@ -73,20 +91,27 @@ while True:
         frame_small = np.array(Image.fromarray(frame).resize((128, 72), Image.Resampling.NEAREST))
         frames.append(frame_small)
 
-        #Keep the frame count at 5
+        # Keep the frame count at 5
         if len(frames) > 5:
             frames.pop(0)
 
-        #Timing 25fps
+        # Timing 25fps
         elapsed = time.time() - start
         if elapsed < frame_time:
             time.sleep(frame_time - elapsed)
 
-        steer, throttle, brake = read_controls()
 
+    '''Out of forloop'''
+    steer, throttle, brake = read_controls()
+    dataset.append((frames.copy(), (steer, throttle, brake)))
 
-    #out of the loop
-    i1, i2, i3, i4, i5 = frames
+    #Save every 100 samples
+    if len(dataset) >= 100:
+        filename = os.path.join(save_dir, f"{int(time.time())}.pkl")
+        with open(filename, "wb") as f:
+            pickle.dump(dataset, f) # type: ignore[arg-type]
+        dataset.clear()
+
 
 #LLM Method
 '''
