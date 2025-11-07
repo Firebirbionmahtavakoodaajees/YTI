@@ -1,49 +1,92 @@
-#from ollama import chat
-#from ollama import ChatResponse
+"""Code Begins"""
+
+#For LLM Method
+'''
+from ollama import chat
+from ollama import ChatResponse
+'''
+
+#For FPS timing
 import time
 
+#For sleep
 from time import sleep
 
+#For ScreenGrab and Conversion
 import mss.tools
-import base64
 from PIL import Image
 import numpy as np
-from io import BytesIO
 
+#For input listening
+from pynput import keyboard
+
+'''Variables'''
+#From screengrab
 sct = mss.mss()
 monitor = sct.monitors[1]
 
+#From picture conversion
+frames = []
+
+#From FPS timing
+fps = 25
+frame_time = 1.0 / fps
+
+#From input listening
+pressed = set()
+
+"""Code"""
+#Sleep 5
 print("Waiting for connected devices to respond...")
 sleep(5)
 
+'''Read Controls'''
+def read_controls():
+    steer_val = 0
+    if "a" in pressed:
+        steer_val -= 1
+    if "d" in pressed:
+        steer_val += 1
+    throttle_val = 1 if "w" in pressed else 0
+    brake_val = 1 if "s" in pressed else 0
+    return steer_val, throttle_val, brake_val
+
+def on_press(key: keyboard.Key | keyboard.KeyCode | None) -> None:
+    if isinstance(key, keyboard.KeyCode) and key.char is not None:
+        pressed.add(key.char)
+
+def on_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
+    if isinstance(key, keyboard.KeyCode) and key.char is not None:
+        pressed.discard(key.char)
+
+listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+listener.start()
+
+#InfLoop
 while True:
-    frames_b64 = []
-
-
-    fps = 25
-    frame_time = 1.0 / fps
     for i in range(5):
+        #Start timing 25fps
         start = time.time()
 
+        #Screenshot and put into ram as an array.
         frame = np.array(sct.grab(monitor))[:, :, :3]
+        frame_small = np.array(Image.fromarray(frame).resize((128, 72), Image.Resampling.NEAREST))
+        frames.append(frame_small)
 
-        img = Image.fromarray(frame).resize((128, 72), Image.Resampling.NEAREST)
+        #Keep the frame count at 5
+        if len(frames) > 5:
+            frames.pop(0)
 
-        buf = BytesIO()
-        img.save(buf, format="JPEG", quality=15)
-        frames_b64.append(base64.b64encode(buf.getvalue()).decode("utf-8"))
-
-        print("hello")
-
+        #Timing 25fps
         elapsed = time.time() - start
         if elapsed < frame_time:
             time.sleep(frame_time - elapsed)
 
+        steer, throttle, brake = read_controls()
+
+
     #out of the loop
-    i1, i2, i3, i4, i5 = frames_b64
-
-
-
+    i1, i2, i3, i4, i5 = frames
 
 #LLM Method
 '''
