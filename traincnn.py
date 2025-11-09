@@ -17,79 +17,15 @@ from torch.utils.data import Dataset, DataLoader, random_split
 # For Progress bar
 from tqdm import tqdm
 
-'''Variables'''
-#GPU
+'''GPU VARIABLE'''
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-#List pkl files and set save dir name
-save_dir = "trainingData"
-pkl_files = [f for f in os.listdir(save_dir) if f.endswith(".pkl")]
-print("Training files:", pkl_files)
-file_path = os.path.join(save_dir, pkl_files[0])
 
-'''Hyperparameters'''
-# Learning
-learning_rate = 0.001         # How fast the model learns (too high = unstable, too low = slow)
-optimizer_type = "adam"       # ["adam", "sgd", "rmsprop"] — Adam is usually the best starting point
-loss_function = "mse"         # ["mse", "crossentropy"] — MSE for regression, CrossEntropy for classification
-epochs = 20                   # How many passes through the entire dataset
-batch_size = 32               # Number of samples per gradient update '32-64'
-
-# CNN Architecture
-input_shape = (5, 240, 320, 3)# (num_frames, height, width, channels) — adjust for your setup
-num_classes = 3               # Example: steer, throttle, brake → 3 outputs
-conv_filters = [32, 64, 128]  # Number of filters in each conv layer (depth of features)
-kernel_size = (3, 3)          # Size of convolution window (3x3 is standard)
-stride = 1                    # How far the filter moves each step
-padding = 1                   # Keeps output size stable (1 for "same" padding)
-
-# Regularization & Stability
-dropout_rate = 0.3            # Randomly deactivate % of neurons to prevent overfitting
-weight_decay = 1e-5           # Small penalty on weights (L2 regularization)
-activation_function = "relu"  # ["relu", "leakyrelu", "tanh", "sigmoid"]
-pool_size = (2, 2)            # MaxPooling window — reduces spatial size
-pool_stride = 2               # How much to slide the pooling window
-
-# Data & Input Processing
-shuffle_data = True           # Shuffle training data for better generalization
-normalize_input = True        # Normalize pixel values (0–1 range)
-augmentation = False          # Enable image augmentation (rotation, flip, etc.)
-
-# Checkpointing & Logging
-save_every = 5                # Save model every N epochs
-model_save_dir = "models"     # Directory for saved model weights
-log_interval = 10             # Print loss every N batches
-
-# Hardware
-use_gpu = True                # Enable CUDA if available
-num_workers = 4               # Data loader threads
-pin_memory = True             # Speeds up GPU training
-
-print("Hyperparameters initialized!")
-
-'''Load data'''
-with open(file_path, "rb") as f:
-    data = pickle.load(f)
-    print(f"Loaded {len(data)} samples from {pkl_files[0]}!")
-
-'''Check GPU Availbility'''
-sleep(2)
-print("GPU available?")
-print(torch.cuda.is_available())
-print("GPU NAME=" + torch.cuda.get_device_name(0))
-sleep(5)
-
-'''
-#Each frame is like
-frames, (steer, throttle, brake) = data[0]
-print("Frame count, vPixels, hPixels, RGB Channels")
-print(np.array(frames).shape)
-'''
-
+'''Classes'''
 
 '''Wrap dataset'''
 class DrivingDataset(Dataset):
-    #Stores loaded data from the .pkl to variable dataset
+    # Stores loaded data from the .pkl to variable dataset
     def __init__(self, dataset):
         self.dataset = dataset
 
@@ -102,7 +38,7 @@ class DrivingDataset(Dataset):
         # Convert to numpy array (5, 240, 320, 3)
         frames_np = np.array(frames, dtype=np.float32)
 
-        #Normalizes RGB values to 0-1 floats COMMENT IF NOT NORMALIZED
+        # Normalizes RGB values to 0-1 floats COMMENT IF NOT NORMALIZED
         frames_np /= 255.0
 
         '''Stacks the channels (3*15)'''
@@ -115,9 +51,9 @@ class DrivingDataset(Dataset):
         frames_tensor = torch.tensor(frames_np, dtype=torch.float32)
         controls_tensor = torch.tensor(controls, dtype=torch.float32)
 
-        return frames_tensor, controls_tensor
+        print("Dataset created!")
 
-print("Dataset created!")
+        return frames_tensor, controls_tensor
 
 '''DescribeCNN'''
 class StandardDriveCNN(nn.Module):
@@ -142,30 +78,104 @@ class StandardDriveCNN(nn.Module):
 
         #Continueing code
         self.fc1 = nn.Linear(flatten_size, 256)
-        self.fc2 = nn.Linear(256, 3)  # steer, throttle, brake
+        self.fc2 = nn.Linear(256, 5)  # steer, throttle, brake, reset, handbrake
 
         # Dropout
         self.dropout = nn.Dropout(0.3)
 
-    def forward(self, x):
-        x = torch.relu(self.conv1(x))
-        x = torch.relu(self.conv2(x))
-        x = torch.relu(self.conv3(x))
-        x = torch.relu(self.conv4(x))
-        x = x.view(x.size(0), -1)  # flatten
-        x = self.dropout(torch.relu(self.fc1(x)))
-        x = self.fc2(x)
+    def forward(self, features):
+        features = torch.relu(self.conv1(features))
+        features = torch.relu(self.conv2(features))
+        features = torch.relu(self.conv3(features))
+        features = torch.relu(self.conv4(features))
+        features = features.view(features.size(0), -1)  # flatten
+        features = self.dropout(torch.relu(self.fc1(features)))
+        features = self.fc2(features)
 
         # Output activations
-        steer = torch.tanh(x[:, 0:1])        # -1..1
-        throttle = torch.sigmoid(x[:, 1:2])  # 0..1
-        brake = torch.sigmoid(x[:, 2:3])     # 0..1
+        steer = torch.tanh(features[:, 0:1])        # -1..1
+        throttle = torch.sigmoid(features[:, 1:2])  # 0..1
+        brake = torch.sigmoid(features[:, 2:3])
+        reset = torch.sigmoid(features[:, 3:4])  # 0..1
+        handbrake = torch.sigmoid(features[:, 4:5])
+        # 0..1
 
-        return torch.cat([steer, throttle, brake], dim=1)
+        return torch.cat([steer, throttle, brake, reset, handbrake], dim=1)
 
-'''Model Description'''
 #For windows processes
 if __name__ == "__main__":
+    '''Variables'''
+
+
+    #List pkl files and set save dir name
+    save_dir = "trainingData"
+
+    #list files
+    pkl_files = [f for f in os.listdir(save_dir) if f.endswith(".pkl")]
+    print("Training files:", pkl_files)
+    file_path = os.path.join(save_dir, pkl_files[0])
+
+    '''Hyperparameters'''
+    # Learning
+    learning_rate = 0.001         # How fast the model learns (too high = unstable, too low = slow)
+    optimizer_type = "adam"       # ["adam", "sgd", "rmsprop"] — Adam is usually the best starting point
+    loss_function = "mse"         # ["mse", "crossentropy"] — MSE for regression, CrossEntropy for classification
+    epochs = 20                   # How many passes through the entire dataset
+    batch_size = 32               # Number of samples per gradient update '32-64'
+
+    # CNN Architecture
+    input_shape = (5, 240, 320, 3)# (num_frames, height, width, channels) — adjust for your setup
+    num_classes = 5               # Example: steer, throttle, brake → 3 outputs
+    conv_filters = [32, 64, 128]  # Number of filters in each conv layer (depth of features)
+    kernel_size = (3, 3)          # Size of convolution window (3x3 is standard)
+    stride = 1                    # How far the filter moves each step
+    padding = 1                   # Keeps output size stable (1 for "same" padding)
+
+    # Regularization & Stability
+    dropout_rate = 0.3            # Randomly deactivate % of neurons to prevent overfitting
+    weight_decay = 1e-5           # Small penalty on weights (L2 regularization)
+    activation_function = "relu"  # ["relu", "leakyrelu", "tanh", "sigmoid"]
+    pool_size = (2, 2)            # MaxPooling window — reduces spatial size
+    pool_stride = 2               # How much to slide the pooling window
+
+    # Data & Input Processing
+    shuffle_data = True           # Shuffle training data for better generalization
+    normalize_input = True        # Normalize pixel values (0–1 range)
+    augmentation = False          # Enable image augmentation (rotation, flip, etc.)
+
+    # Checkpointing & Logging
+    save_every = 5                # Save model every N epochs
+    model_save_dir = "models"     # Directory for saved model weights
+    log_interval = 10             # Print loss every N batches
+
+    # Hardware
+    use_gpu = True                # Enable CUDA if available
+    num_workers = 4               # Data loader threads
+    pin_memory = True             # Speeds up GPU training
+
+    print("Hyperparameters initialized!")
+
+    '''Load data'''
+    with open(file_path, "rb") as f:
+        data = pickle.load(f)
+        print(f"Loaded {len(data)} samples from {pkl_files[0]}!")
+
+    '''Check GPU Availbility'''
+    sleep(2)
+    print("GPU available?")
+    print(torch.cuda.is_available())
+    print("GPU NAME=" + torch.cuda.get_device_name(0))
+    sleep(5)
+
+    '''
+    #Each frame is like
+    frames, (steer, throttle, brake) = data[0]
+    print("Frame count, vPixels, hPixels, RGB Channels")
+    print(np.array(frames).shape)
+    '''
+
+
+    '''Model Description'''
     model = StandardDriveCNN().to(device)
     model.train()
 

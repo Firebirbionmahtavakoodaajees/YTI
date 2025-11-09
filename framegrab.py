@@ -24,6 +24,7 @@ import numpy as np
 
 #For input listening
 from pynput import keyboard
+from pynput.keyboard import Key
 
 
 '''Variables'''
@@ -52,22 +53,34 @@ print("Waiting for connected devices to respond...")
 sleep(5)
 
 '''Read Controls'''
-def read_controls() -> tuple[int, int, int]:
+def read_controls() -> tuple[int, int, int, int, int]:
+    #Steering
     steer_val = 0
     if "a" in pressed:
         steer_val -= 1
     if "d" in pressed:
         steer_val += 1
+    #Throttle
     throttle_val = 1 if "w" in pressed else 0
+
+    #Brake
     brake_val = 1 if "s" in pressed else 0
-    return steer_val, throttle_val, brake_val
+
+    #Reset
+    reset_val = 1 if "r" in pressed else 0
+
+    #Handbrake
+    handbrake_val = 1 if 'space' in pressed else 0
+
+    return steer_val, throttle_val, brake_val, reset_val, handbrake_val
 
 def on_press(key) -> None:
     try:
         if key.char is not None:
             pressed.add(key.char)
     except AttributeError:
-        pass  # Ignore special keys (arrows, ctrl, etc.)
+        if key == Key.space:
+            pressed.add('space')
 
 
 def on_release(key) -> None:
@@ -75,7 +88,8 @@ def on_release(key) -> None:
         if key.char is not None:
             pressed.discard(key.char)
     except AttributeError:
-        pass
+        if key == Key.space:
+            pressed.discard('space')
 
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
@@ -102,8 +116,8 @@ while True:
 
 
     '''Out of forloop'''
-    steer, throttle, brake = read_controls()
-    dataset.append((frames.copy(), (steer, throttle, brake)))
+    steer, throttle, brake, reset, handbrake = read_controls()
+    dataset.append((frames.copy(), (steer, throttle, brake, reset, handbrake)))
 
     #Save every 100 samples
     if len(dataset) >= 100:
