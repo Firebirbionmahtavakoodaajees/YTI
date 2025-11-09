@@ -63,18 +63,18 @@ def send_controls(steer, throttle, brake, reset, handbrake):
         keyboard.release('w')
 
     # Brake
-    if brake > 0.5:
+    if brake > 0.1:
         keyboard.press('s')
     else:
         keyboard.release('s')
 
     # Reset
-    if reset > 0.5:
+    if reset > 0.8:
         keyboard.press('r')
         keyboard.release('r')
 
     # Handbrake
-    if handbrake > 0.5:
+    if handbrake > 0.1:
         keyboard.press(Key.space)
     else:
         keyboard.release(Key.space)
@@ -82,7 +82,7 @@ def send_controls(steer, throttle, brake, reset, handbrake):
 
 '''Load the trained cnn'''
 print("Loading model, switch into BeamNG!")
-sleep(10)
+sleep(2)
 model = StandardDriveCNN().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()

@@ -82,7 +82,6 @@ def on_press(key) -> None:
         if key == Key.space:
             pressed.add('space')
 
-
 def on_release(key) -> None:
     try:
         if key.char is not None:
@@ -91,8 +90,17 @@ def on_release(key) -> None:
         if key == Key.space:
             pressed.discard('space')
 
+
+#Warning user of program start
+print("Starting listener")
+sleep(2)
+print("Start gathering data!")
+
+#Start keyboard listener
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
+
+print("Looping")
 
 '''Main Loop'''
 while True:
@@ -113,7 +121,6 @@ while True:
         elapsed = time.time() - start
         if elapsed < frame_time:
             time.sleep(frame_time - elapsed)
-
 
     '''Out of forloop'''
     steer, throttle, brake, reset, handbrake = read_controls()
