@@ -121,7 +121,7 @@ if __name__ == "__main__":
     optimizer_type = "adam"       # ["adam", "sgd", "rmsprop"] — Adam is usually the best starting point
     loss_function = "mse"         # ["mse", "crossentropy"] — MSE for regression, CrossEntropy for classification
     epochs = 20                   # How many passes through the entire dataset
-    batch_size = 32               # Number of samples per gradient update '32-64'
+    batch_size = 128              # Number of samples per gradient update '32-64'
 
     # CNN Architecture
     input_shape = (5, 240, 320, 3)# (num_frames, height, width, channels) — adjust for your setup
