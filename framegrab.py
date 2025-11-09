@@ -1,4 +1,4 @@
-"""Code Begins"""
+"""Framegrab and conversion script"""
 
 '''Imports'''
 #For LLM Method
@@ -33,7 +33,7 @@ monitor = sct.monitors[1]
 
 #From data saving
 dataset = []
-save_dir = "training_data"
+save_dir = "trainingData"
 os.makedirs(save_dir, exist_ok=True)
 
 #From picture conversion
@@ -88,7 +88,7 @@ while True:
 
         #Screenshot and put into ram as an array.
         frame = np.array(sct.grab(monitor))[:, :, :3]
-        frame_small = np.array(Image.fromarray(frame).resize((128, 72), Image.Resampling.NEAREST))
+        frame_small = np.array(Image.fromarray(frame).resize((320, 240), Image.Resampling.NEAREST))
         frames.append(frame_small)
 
         # Keep the frame count at 5
@@ -111,6 +111,7 @@ while True:
         with open(filename, "wb") as f:
             pickle.dump(dataset, f) # type: ignore[arg-type]
         dataset.clear()
+        print("saved to", filename)
 
 
 #LLM Method
