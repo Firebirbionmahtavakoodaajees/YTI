@@ -120,7 +120,7 @@ if __name__ == "__main__":
     learning_rate = 0.001         # How fast the model learns (too high = unstable, too low = slow)
     optimizer_type = "adam"       # ["adam", "sgd", "rmsprop"] — Adam is usually the best starting point
     loss_function = "mse"         # ["mse", "crossentropy"] — MSE for regression, CrossEntropy for classification
-    epochs = 20                   # How many passes through the entire dataset
+    epochs = 250                  # How many passes through the entire dataset
     batch_size = 128              # Number of samples per gradient update '32-64'
 
     # CNN Architecture
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     augmentation = False          # Enable image augmentation (rotation, flip, etc.)
 
     # Checkpointing & Logging
-    save_every = 5                # Save model every N epochs
+    save_every = 25               # Save model every N epochs
     model_save_dir = "models"     # Directory for saved model weights
     log_interval = 10             # Print loss every N batches
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         #Check if done and save
         if epoch % save_every == 0:
             os.makedirs(model_save_dir, exist_ok=True)
-            save_path = os.path.join(model_save_dir, f"cnn_epoch{epoch}.pth")
+            save_path = os.path.join(model_save_dir, f"epoch{epoch}.pth")
             torch.save(model.state_dict(), save_path)
             print(f"Model saved to {save_path}")
 
