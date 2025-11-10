@@ -12,7 +12,7 @@ from traincnn import StandardDriveCNN
 
 '''Variables'''
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_path = "models/cnn_epoch20.pth"  # path to your trained model
+model_path = "models/epoch250.pth"  # path to your trained model
 fps = 25
 frame_time = 1.0 / fps
 num_frames = 5  # number of frames your model expects
