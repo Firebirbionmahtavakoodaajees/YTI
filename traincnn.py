@@ -60,10 +60,10 @@ class StandardDriveCNN(nn.Module):
     def __init__(self):
         super().__init__()
         # Conv layers (DON'T CHANGE THE VALUE OF THE SMALLEST IN CHANNEL (5*3channel=15))
-        self.conv1 = nn.Conv2d(15, 32, kernel_size=5, stride=2, padding=2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.conv1 = nn.Conv2d(15, 64, kernel_size=5, stride=1, padding=2)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.conv4 = nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1)
 
         # Fully connected layers (fc)
         '''Wanna place this elsewhere dont know where yet...'''
@@ -77,8 +77,8 @@ class StandardDriveCNN(nn.Module):
             flatten_size = x.numel() // x.shape[0]
 
         #Continueing code
-        self.fc1 = nn.Linear(flatten_size, 256)
-        self.fc2 = nn.Linear(256, 5)  # steer, throttle, brake, reset, handbrake
+        self.fc1 = nn.Linear(flatten_size, 512)
+        self.fc2 = nn.Linear(512, 5)  # steer, throttle, brake, reset, handbrake
 
         # Dropout
         self.dropout = nn.Dropout(0.3)
