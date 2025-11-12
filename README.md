@@ -37,10 +37,10 @@ Everything you need to create your own AI driver — neatly packaged and beautif
 
 | Layer | Type        | Kernel | Stride | Padding | Channels | Notes |
 |:------|:-------------|:-------:|:-------:|:--------:|:----------:|:------|
-| 1 | Conv2d | 5×5 | 1 | 2 | 15 → 32 | Broad feature extraction |
-| 2 | Conv2d | 3×3 | 2 | 1 | 32 → 64 | Local feature refinement |
-| 3 | Conv2d | 3×3 | 2 | 1 | 64 → 128 | Object edge detection |
-| 4 | Conv2d | 3×3 | 2 | 1 | 128 → 256 | Scene compression |
+| 1 | Conv2d | 5×5 | 1 | 2 | 15 → 64 | Broad feature extraction |
+| 2 | Conv2d | 3×3 | 2 | 1 | 64 → 128 | Local feature refinement |
+| 3 | Conv2d | 3×3 | 2 | 1 | 128 → 256 | Object edge detection |
+| 4 | Conv2d | 3×3 | 2 | 1 | 256 → 512 | Scene compression |
 | 5 | Fully Connected | — | — | — | 256 → 5 | Output predictions |
 
 **Outputs:** `[steer, throttle, brake, reset, handbrake]`
