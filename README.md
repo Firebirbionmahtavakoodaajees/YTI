@@ -1,4 +1,4 @@
-# 🏎️ YTI Autonomous Driving AI — The Best YTI Project in the World 🌍
+# 🏎️ Autonomous Driving AI — The Best YTI Project in the World 🌍
 
 Welcome to **YTI Autonomous Driving AI**, the ultimate end-to-end self-driving simulation project.  
 This system watches your gameplay, learns from your inputs, and then drives *just like you* — or better.
