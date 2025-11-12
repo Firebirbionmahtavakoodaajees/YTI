@@ -37,7 +37,7 @@ Everything you need to create your own AI driver — neatly packaged and beautif
 
 | Layer | Type        | Kernel | Stride | Padding | Channels | Notes |
 |:------|:-------------|:-------:|:-------:|:--------:|:----------:|:------|
-| 1 | Conv2d | 5×5 | 2 | 2 | 15 → 32 | Broad feature extraction |
+| 1 | Conv2d | 5×5 | 1 | 2 | 15 → 32 | Broad feature extraction |
 | 2 | Conv2d | 3×3 | 2 | 1 | 32 → 64 | Local feature refinement |
 | 3 | Conv2d | 3×3 | 2 | 1 | 64 → 128 | Object edge detection |
 | 4 | Conv2d | 3×3 | 2 | 1 | 128 → 256 | Scene compression |
@@ -82,7 +82,7 @@ python drivingAI.py
 | Parameter          | Recommended Value | Description                               |
 | :----------------- | :---------------: | :---------------------------------------- |
 | `epochs`           |       50–100      | More = better learning (if data is large) |
-| `batch_size`       |       32–64       | 64 recommended for strong GPUs            |
+| `batch_size`       |       32–256      | 64 recommended for strong GPUs            |
 | `learning_rate`    |       0.001       | Stable for Adam optimizer                 |
 | `input_resolution` |      320×240      | Great balance between speed and detail    |
 
